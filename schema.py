@@ -22,4 +22,11 @@ class Query(graphene.ObjectType):
 
     all_users = SQLAlchemyConnectionField(UserConnection)
 
+    # user query (test, remove when other queries are implemented)
+    user = graphene.List(User, name=graphene.String())
+    def resolve_user(self, info, **args):
+        q = args.get('name')
+        user_query = User.get_query(info)
+        return user_query.filter(UserModel.name.contains(q)).all()
+
 schema = graphene.Schema(query=Query)
