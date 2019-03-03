@@ -13,7 +13,8 @@ Base = declarative_base()
 Base.query = db_session.query_property()
 
 class User(Base):
-    __tablename__ = 'users'
+    __table_args__ = {'schema' : 'auth'}
+    __tablename__ = 'user'
 
     id = Column('id', Integer, primary_key=True)
     name = Column(String)
