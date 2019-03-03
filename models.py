@@ -16,6 +16,8 @@ class User(Base):
     __table_args__ = {'schema' : 'auth'}
     __tablename__ = 'user'
 
-    uid = Column(Integer, primary_key=True)
-    name = Column(String)
+    uid = Column(String, primary_key=True)
+    full_name = Column(String)
+    call_name = Column(String)
+    email = Column(String)
     password = Column(String)
