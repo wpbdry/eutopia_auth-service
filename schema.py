@@ -11,7 +11,6 @@ class User(SQLAlchemyObjectType):
         model = UserModel
         interfaces = (relay.Node, )
 
-
 class UserConnection(relay.Connection):
     class Meta:
         node = User
@@ -35,7 +34,7 @@ class RegisterUser(graphene.Mutation):
             return RegisterUser(ok=False, msg=email + ' is not a valid email address')
         try:
             # TODO: check if uid is already in use. 19 octillion != infinite
-            db_session.add(UserModel(uid=''.join(random.choice(string.ascii_lowercase) for i in range(20)),
+            db_session.add(UserModel(uid=''.join(random.choice(string.ascii_letters) for i in range(20)),
                 full_name=full_name, call_name=call_name, password=password, email=email))
             db_session.commit()
             return RegisterUser(ok=True, msg='user successfully created')
@@ -45,6 +44,13 @@ class RegisterUser(graphene.Mutation):
 
     def _isValidEmail(address):
         return re.match(r"[^@]+@[^@]+\.[^@]+", address)
+
+class SessionToken:
+    def __init__(self):
+        self.token = ''.join(random.choice(string.ascii_letters) for i in range(20))
+
+    def __str__(self):
+        return self.token
 
 class Query(graphene.ObjectType):
     node = graphene.relay.Node.Field()

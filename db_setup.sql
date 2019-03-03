@@ -10,3 +10,9 @@ CREATE TABLE auth.user (
 
 INSERT INTO auth.user (full_name, call_name, email, password, uid)
   VALUES ('Santa Claus', 'Santa', 'santa@claus.example', 'very_secure', 'abcdefghijklmnopqrst');
+
+CREATE TABLE auth.session (
+  uid       char(20)        UNIQUE NOT NULL REFERENCES auth.user(uid),
+  created   timestamp       NOT NULL,
+  timeout   interval        NOT NULL
+);
