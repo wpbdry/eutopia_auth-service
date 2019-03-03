@@ -13,6 +13,7 @@ INSERT INTO auth.user (full_name, call_name, email, password, uid)
 
 CREATE TABLE auth.session (
   uid       char(20)        UNIQUE NOT NULL REFERENCES auth.user(uid),
+  token     char(20)        UNIQUE NOT NULL,
   created   timestamp       NOT NULL,
   timeout   interval        NOT NULL
 );

@@ -21,3 +21,12 @@ class User(Base):
     call_name = Column(String)
     email = Column(String)
     password = Column(String)
+
+class Session(Base):
+    __table_args__ = {'schema' : 'auth'}
+    __tablename__ = 'session'
+
+    uid = Column(String, primary_key=True)
+    token = Column(String)
+    created = Column(TIMESTAMP)
+    timeout = Column(Interval)

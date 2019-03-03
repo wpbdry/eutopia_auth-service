@@ -1,10 +1,12 @@
 import graphene
 from graphene import relay
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
+from sqlalchemy import *
 import random
 import string
 import re
-from models import db_session, User as UserModel
+from datetime import timedelta, datetime
+from models import db_session, User as UserModel, Session as SessionModel
 
 class User(SQLAlchemyObjectType):
     class Meta:
@@ -45,6 +47,37 @@ class RegisterUser(graphene.Mutation):
     def _isValidEmail(address):
         return re.match(r"[^@]+@[^@]+\.[^@]+", address)
 
+class LoginUser(graphene.Mutation):
+    class Arguments:
+        email = graphene.String()
+        password = graphene.String()
+
+    ok = graphene.Boolean()
+    msg = graphene.String()
+    token = graphene.String()
+
+    def mutate(self, info, email, password):
+        user = User.get_query(info).filter(UserModel.email == email).first()
+        # check if user exists
+        if not user:
+            return LoginUser(ok=False, msg=email + ' doesn\'t exist')
+        # check if password is correct
+        if user.password != password:
+            return LoginUser(ok=False, msg='password is incorrect')
+        # check if already logged in
+        if db_session.query(SessionModel).filter(SessionModel.uid == user.uid).first():
+            return LoginUser(ok=False, msg='user already logged in')
+        # login successful
+        session_token = SessionToken()
+        try:
+            db_session.add(SessionModel(uid=user.uid, token=str(session_token),
+                created=datetime.now(), timeout=timedelta(hours=1)))
+            db_session.commit()
+            return LoginUser(ok=True, msg='login successful', token=session_token)
+        except Exception as e:
+            print('error during login: ' + str(e))
+            return LoginUser(ok=False, msg='error during login')
+
 class SessionToken:
     def __init__(self):
         self.token = ''.join(random.choice(string.ascii_letters) for i in range(20))
@@ -69,5 +102,6 @@ class Query(graphene.ObjectType):
 
 class Mutation(graphene.ObjectType):
     register_user = RegisterUser.Field()
+    login_user = LoginUser.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
