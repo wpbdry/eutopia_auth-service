@@ -3,6 +3,7 @@ from graphene import relay
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
 import random
 import string
+import re
 from models import db_session, User as UserModel
 
 class User(SQLAlchemyObjectType):
@@ -29,6 +30,9 @@ class RegisterUser(graphene.Mutation):
         # check if email is already used
         if len(User.get_query(info).filter(UserModel.email.contains(email)).all()) > 0:
             return RegisterUser(ok=False, msg='the email address \'' + email + '\' is already in use')
+        # check if email is valid
+        if not RegisterUser._isValidEmail(email):
+            return RegisterUser(ok=False, msg=email + ' is not a valid email address')
         try:
             # TODO: check if uid is already in use. 19 octillion != infinite
             db_session.add(UserModel(uid=''.join(random.choice(string.ascii_lowercase) for i in range(20)),
@@ -38,6 +42,9 @@ class RegisterUser(graphene.Mutation):
         except Exception as e:
             print('error creating user: ' + str(e))
             return RegisterUser(ok=False, msg='error')
+
+    def _isValidEmail(address):
+        return re.match(r"[^@]+@[^@]+\.[^@]+", address)
 
 class Query(graphene.ObjectType):
     node = graphene.relay.Node.Field()
