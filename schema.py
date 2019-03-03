@@ -26,8 +26,11 @@ class RegisterUser(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info, full_name, call_name, email, password):
+        # check if email is already used
+        if len(User.get_query(info).filter(UserModel.email.contains(email)).all()) > 0:
+            return RegisterUser(ok=False, msg='the email address \'' + email + '\' is already in use')
         try:
-            # TODO: check if uid is already in use. 19 octillion != 0
+            # TODO: check if uid is already in use. 19 octillion != infinite
             db_session.add(UserModel(uid=''.join(random.choice(string.ascii_lowercase) for i in range(20)),
                 full_name=full_name, call_name=call_name, password=password, email=email))
             db_session.commit()
