@@ -78,6 +78,24 @@ class LoginUser(graphene.Mutation):
             print('error during login: ' + str(e))
             return LoginUser(ok=False, msg='error during login')
 
+class LogoutUser(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+
+    ok = graphene.Boolean()
+    msg = graphene.String()
+
+    def mutate(self, info, token):
+        # user = db_session.query(SessionModel).filter(SessionModel.token == token).delete()
+        try:
+            SessionModel.query.filter(SessionModel.token == token).delete()
+            db_session.commit()
+            return LogoutUser(ok=True, msg='successfully logged out')
+        except Exception as e:
+            print('error during logout: ' + str(e))
+            return LogoutUser(ok=False, msg='error during logout')
+
+
 class SessionToken:
     def __init__(self):
         self.token = ''.join(random.choice(string.ascii_letters) for i in range(20))
@@ -103,5 +121,6 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     register_user = RegisterUser.Field()
     login_user = LoginUser.Field()
+    logout_user = LogoutUser.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
