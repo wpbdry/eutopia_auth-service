@@ -3,7 +3,9 @@ from sqlalchemy.orm import (scoped_session, sessionmaker, relationship,
                             backref)
 from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('postgresql://localhost/eut-auth', convert_unicode=True)
+from db_connection_info import connection_string
+
+engine = create_engine(connection_string, convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))
