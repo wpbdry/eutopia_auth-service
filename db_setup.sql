@@ -5,7 +5,7 @@ CREATE TABLE auth.user (
   full_name   varchar(70)   NOT NULL,
   call_name   varchar(20),
   email       varchar(70)   UNIQUE NOT NULL,
-  password    varchar(50)   NOT NULL
+  password    varchar(100)   NOT NULL
 );
 
 INSERT INTO auth.user (full_name, call_name, email, password, uid)

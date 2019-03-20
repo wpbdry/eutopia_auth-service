@@ -2,6 +2,8 @@ import graphene
 from models import db_session, User as UserModel
 import re, random, string
 
+import hash
+
 class RegisterUser(graphene.Mutation):
     class Arguments:
         full_name = graphene.String()
@@ -21,8 +23,9 @@ class RegisterUser(graphene.Mutation):
             return RegisterUser(ok=False, msg=email + ' is not a valid email address')
         try:
             # TODO: check if uid is already in use. 19 octillion != infinite
+            hashed_password = hash.encrypt(password)
             db_session.add(UserModel(uid=''.join(random.choice(string.ascii_letters) for i in range(20)),
-                full_name=full_name, call_name=call_name, password=password, email=email))
+                full_name=full_name, call_name=call_name, password=hashed_password, email=email))
             db_session.commit()
             return RegisterUser(ok=True, msg='user successfully created')
         except Exception as e:

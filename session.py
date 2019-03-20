@@ -3,6 +3,8 @@ import random, string
 from datetime import timedelta, datetime
 from models import db_session, User as UserModel, Session as SessionModel
 
+import hash
+
 class SessionToken:
     def __init__(self):
         self.token = ''.join(random.choice(string.ascii_letters) for i in range(20))
@@ -25,8 +27,8 @@ class LoginUser(graphene.Mutation):
         # check if user exists
         if not user:
             return LoginUser(ok=False, msg=email + ' doesn\'t exist')
-        # check if password is correct
-        if user.password != password:
+        # check if password is incorrect
+        if not hash.check(password, user.password):
             return LoginUser(ok=False, msg='password is incorrect')
         # check if already logged in
         if db_session.query(SessionModel).filter(SessionModel.uid == user.uid).first():
