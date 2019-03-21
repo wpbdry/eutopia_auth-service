@@ -3,9 +3,9 @@ from sqlalchemy.orm import (scoped_session, sessionmaker, relationship,
                             backref)
 from sqlalchemy.ext.declarative import declarative_base
 
-from db_connection_info import connection_string
+from config import db_connection_string
 
-engine = create_engine(connection_string, convert_unicode=True)
+engine = create_engine(db_connection_string, convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
                                          bind=engine))

@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 from models import db_session
 from schema import schema
+import config
 
 app = Flask(__name__)
 CORS(app)
@@ -24,4 +25,7 @@ def shutdown_session(exception=None):
     db_session.remove()
 
 if __name__ == '__main__':
-    app.run()
+    app.run(
+        host=config.flask_host,
+        port=config.flask_port
+    )
