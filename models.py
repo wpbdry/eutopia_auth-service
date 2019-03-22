@@ -14,6 +14,7 @@ Base = declarative_base()
 # necessary for querying
 Base.query = db_session.query_property()
 
+"""
 class User(Base):
     __table_args__ = {'schema' : 'auth'}
     __tablename__ = 'user'
@@ -23,6 +24,26 @@ class User(Base):
     call_name = Column(String)
     email = Column(String)
     password = Column(String)
+"""
+
+
+class User(Base):
+    __table_args__ = {'schema' : 'auth'}
+    __tablename__ = 'user'
+
+    uid = Column(String, primary_key=True)
+    email = Column(String)
+    password = Column(String)
+
+
+class PendingSignup(Base):
+    __table_args__ = {'schema': 'auth'}
+    __tablename__ = 'pending_signup'
+
+    email = Column(String, primary_key=True)
+    code = Column(String)
+    created = Column(TIMESTAMP)
+
 
 class Session(Base):
     __table_args__ = {'schema' : 'auth'}

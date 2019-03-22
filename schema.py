@@ -3,7 +3,7 @@ from graphene import relay
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
 from models import User as UserModel
 
-from registration import RegisterUser
+import registration
 from session import SessionToken, LoginUser, LogoutUser
 
 class User(SQLAlchemyObjectType):
@@ -31,7 +31,8 @@ class Query(graphene.ObjectType):
         return User.get_query(info).filter(UserModel.name.contains(args.get('name'))).all()
 
 class Mutation(graphene.ObjectType):
-    register_user = RegisterUser.Field()
+    # register_user = RegisterUser.Field()
+    register_email = registration.RegisterEmail.Field()
     login_user = LoginUser.Field()
     logout_user = LogoutUser.Field()
 
