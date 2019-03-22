@@ -2,10 +2,11 @@ import graphene
 import models
 import random, string
 from datetime import datetime
-import gql
+import send_graphql
 
 import hash
 import regex
+import config
 
 """
 #TODO: Remove when other registration process works
@@ -53,16 +54,16 @@ class RegisterEmail(graphene.Mutation):
     def mutate(self, info, email):
         # Check if email is valid
         if not regex.is_valid_email(email):
-            return RegisterEmail(ok=False, insession=False, msg="%s is not a valid email address" % email)
+            return RegisterEmail(ok=False, insession=False, msg="%s is not a valid email address" % (email,))
         # Check if email is already used
         if models.User.query.filter(models.User.email == email).first():
-            return RegisterEmail(ok=False, insession=False, msg="the email address %s is already in use" % email)
+            return RegisterEmail(ok=False, insession=False, msg="the email address %s is already in use" % (email,))
         # Check if email is already pending
         if models.PendingSignup.query.filter(models.PendingSignup.email == email).first():
             return RegisterEmail(
                 ok=True,
                 insession=True,
-                msg="%s has already signed up. Please check your email for a code from us" % email)
+                msg="%s has already signed up. Please check your email for a code from us" % (email,))
         # Put email in pending_signups database with unique code and send email
         code_is_unique = False
         while not code_is_unique:
@@ -73,12 +74,27 @@ class RegisterEmail(graphene.Mutation):
             # database
             models.db_session.add(models.PendingSignup(email=email, code=code, created=datetime.now()))
             models.db_session.commit()
-            # email
-
-            return RegisterEmail(
-                ok=True, insession=False,
-                msg='email registered correctly. Please check your inbox for a code from us')
         except Exception as e:
-            error = 'error creating user: %s' % str(e)
+            error = 'database error: %s' % (str(e), )
             print(error)
-            return RegisterEmail(ok=False, msg=error)
+            return RegisterEmail(ok=False, insession=False, msg=error)
+        # email
+        email_body = """Hello %s! Thank you for signing up to %s. Please paste the following code to continue: %s See you soon!""" % (email, config.product_name, code)
+        graphql_query = """{"query": "mutation { sendMail(recipient: \\"%s\\", subject: \\"Thanks for signing up to %s!\\", body: \\"%s\\", password: \\"%s\\") { ok, msg } }" }""" % (email, config.product_name, email_body, config.send_mail_password)
+        print(graphql_query)
+        try:
+            # Send query to mail service
+            send_graphql.send_query(
+                "send_mail",
+                graphql_query
+            )
+            return RegisterEmail(
+                ok=True,
+                insession=False,
+                msg='email registered correctly. Please check your inbox for a code from us'
+            )
+        except Exception as e:
+            error = 'error sending email: %s' % (str(e), )
+            print(error)
+            print(e)
+            return RegisterEmail(ok=False, insession=False, msg=error)
