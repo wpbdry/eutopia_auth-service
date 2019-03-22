@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS auth.user CASCADE;
 CREATE TABLE auth.user (
   uid         char(20)      UNIQUE NOT NULL,
   email       varchar(70)   UNIQUE NOT NULL,
-  password    varchar(100)  NOT NULL
+  password    varchar(100)
 );
 
 INSERT INTO auth.user (email, password, uid)
@@ -18,9 +18,9 @@ CREATE TABLE auth.session (
   timeout   interval        NOT NULL
 );
 
-DROP TABLE IF EXISTS pending_signup CASCADE;
+DROP TABLE IF EXISTS auth.pending_signup CASCADE;
 CREATE TABLE auth.pending_signup (
-  email     char(70)        UNIQUE NOT NULL,
-  code      char(6)         NOT NULL,
+  uid     char(70)          UNIQUE NOT NULL,
+  code      char(6)         UNIQUE NOT NULL,
   created   timestamp       NOT NULL
 )

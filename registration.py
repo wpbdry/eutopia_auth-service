@@ -48,22 +48,34 @@ class RegisterEmail(graphene.Mutation):
         email = graphene.String()
 
     ok = graphene.Boolean()
-    insession = graphene.Boolean()
     msg = graphene.String()
 
     def mutate(self, info, email):
         # Check if email is valid
         if not regex.is_valid_email(email):
-            return RegisterEmail(ok=False, insession=False, msg="%s is not a valid email address" % (email,))
-        # Check if email is already used
-        if models.User.query.filter(models.User.email == email).first():
-            return RegisterEmail(ok=False, insession=False, msg="the email address %s is already in use" % (email,))
-        # Check if email is already pending
-        if models.PendingSignup.query.filter(models.PendingSignup.email == email).first():
-            return RegisterEmail(
-                ok=True,
-                insession=True,
-                msg="%s has already signed up. Please check your email for a code from us" % (email,))
+            return RegisterEmail(ok=False, msg="%s is not a valid email address" % (email,))
+        # Check if email is already used and check whether user has already set password
+        existing_user = models.User.query.filter(models.User.email == email).first()
+        if existing_user:
+            existing_user_has_password = existing_user.password
+            if existing_user_has_password:
+                return RegisterEmail(ok=False, msg="the email address %s is already in use" % (email,))
+            else:
+                return RegisterEmail(ok=False, msg="you have already signed up. Please check your inbox for a code from us")
+        # Create unique uid
+        uid_is_unique = False
+        while not uid_is_unique:
+            uid = ''.join(random.choice(string.ascii_letters) for i in range(20))
+            if not models.User.query.filter(models.User.uid == uid).first():
+                uid_is_unique = True
+        # Add user
+        try:
+            models.db_session.add(models.User(uid=uid, email=email))
+            models.db_session.commit()
+        except Exception as e:
+            error = 'error adding user email: %s' % (str(e),)
+            print(error)
+            return RegisterEmail(ok=False, msg=error)
         # Put email in pending_signups database with unique code and send email
         code_is_unique = False
         while not code_is_unique:
@@ -72,12 +84,12 @@ class RegisterEmail(graphene.Mutation):
                 code_is_unique = True
         try:
             # database
-            models.db_session.add(models.PendingSignup(email=email, code=code, created=datetime.now()))
+            models.db_session.add(models.PendingSignup(uid=uid, code=code, created=datetime.now()))
             models.db_session.commit()
         except Exception as e:
-            error = 'database error: %s' % (str(e), )
+            error = 'error storing code in database: %s' % (str(e), )
             print(error)
-            return RegisterEmail(ok=False, insession=False, msg=error)
+            return RegisterEmail(ok=False, msg=error)
         # email
         email_body = """Hello %s! Thank you for signing up to %s. Please paste the following code to continue: %s See you soon!""" % (email, config.product_name, code)
         graphql_query = """{"query": "mutation { sendMail(recipient: \\"%s\\", subject: \\"Thanks for signing up to %s!\\", body: \\"%s\\", password: \\"%s\\") { ok, msg } }" }""" % (email, config.product_name, email_body, config.send_mail_password)
@@ -90,11 +102,10 @@ class RegisterEmail(graphene.Mutation):
             )
             return RegisterEmail(
                 ok=True,
-                insession=False,
                 msg='email registered correctly. Please check your inbox for a code from us'
             )
         except Exception as e:
             error = 'error sending email: %s' % (str(e), )
             print(error)
             print(e)
-            return RegisterEmail(ok=False, insession=False, msg=error)
+            return RegisterEmail(ok=False, msg=error)
