@@ -1,7 +1,7 @@
 import secret
 
 # Product name
-product_name = "Fiirio"
+product_name = "Cube"
 
 
 # Edit the below variables to match correct database settings
