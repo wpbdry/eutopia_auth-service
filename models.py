@@ -14,18 +14,6 @@ Base = declarative_base()
 # necessary for querying
 Base.query = db_session.query_property()
 
-"""
-class User(Base):
-    __table_args__ = {'schema' : 'auth'}
-    __tablename__ = 'user'
-
-    uid = Column(String, primary_key=True)
-    full_name = Column(String)
-    call_name = Column(String)
-    email = Column(String)
-    password = Column(String)
-"""
-
 
 class User(Base):
     __table_args__ = {'schema' : 'auth'}

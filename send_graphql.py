@@ -7,9 +7,8 @@ def send_query(service, query_string):
     url = getattr(config, service)
     headers = {'Content-type': 'application/json'}
     r = requests.post(url, headers=headers, data=query_string)
-    print(r.text[0:32])
     if r.status_code == 200:
-        if r.text[0:31] == '{"data":{"sendMail":{"ok":true,':
+        if r.text[0:34] == '{"data":{"sendMail":{"exitcode":0,':
             return r.text
         else:
             raise Exception("GraphQL query error: %s" % (r.text, ))
