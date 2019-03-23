@@ -23,3 +23,6 @@ flask_port = 5000
 # Other microservices' IPs
 send_mail = "http://localhost:5001/send-mail"
 send_mail_password = secret.send_mail_password
+
+# Other
+minimum_password_length = 8

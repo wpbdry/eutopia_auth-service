@@ -20,7 +20,7 @@ CREATE TABLE auth.session (
 
 DROP TABLE IF EXISTS auth.pending_signup CASCADE;
 CREATE TABLE auth.pending_signup (
-  uid     char(70)          UNIQUE NOT NULL,
+  email     char(70)        UNIQUE NOT NULL,
   code      char(6)         UNIQUE NOT NULL,
   created   timestamp       NOT NULL
 )

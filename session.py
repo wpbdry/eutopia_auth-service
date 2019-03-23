@@ -4,15 +4,30 @@ import datetime
 import models
 
 import hash
+import config
 
-
-def is_login_code_valid(uid):
-    pending_user = models.PendingSignup.query.filter_by(uid=uid).first()
+def is_login_code_valid(email):
+    pending_user = models.PendingSignup.query.filter_by(email=email).first()
     # Check time
     time_passed = datetime.datetime.now() - pending_user.created
     if time_passed > datetime.timedelta(hours=1):
         return False
     return True
+
+
+def write_token(uid):
+    session_token = SessionToken()
+    try:
+        models.db_session.add(models.Session(
+            uid=uid,
+            token=str(session_token),
+            created=datetime.datetime.now(),
+            timeout=datetime.timedelta(days=90)
+        ))
+        models.db_session.commit()
+        return str(session_token)
+    except Exception as e:
+        raise Exception(str(e))
 
 
 class SessionToken:
@@ -28,68 +43,75 @@ class SessionToken:
         pass
 
 
-class LoginUser(graphene.Mutation):
+class VerifyCode(graphene.Mutation):
     class Arguments:
         email = graphene.String(required=True)
-        code = graphene.String(required=False, default_value=False)
-        password = graphene.String(required=False, default_value=False)
+        code = graphene.String(required=True)
+        password = graphene.String(required=True)
 
     exitcode = graphene.Int()
     token = graphene.String()
     msg = graphene.String()
 
     def mutate(self, info, email, code, password):
+        # Check code
+        pending_user = models.PendingSignup.query.filter_by(email=email).first()
+        if not pending_user:
+            return VerifyCode(exitcode=200, msg="%s is not signed up. Please sign up first." % (email, ))
+        if not is_login_code_valid(email):
+            return VerifyCode(exitcode=500, msg="code no longer valid")
+        if pending_user.code != code:
+            return VerifyCode(exitcode=3, msg="incorrect code")
+        # Check that password is 8 - 32 characters
+        if len(password) < config.minimum_password_length:
+            return VerifyCode(exitcode=4, msg="password is too short")
+        # Add user
+        # Create unique uid
+        uid_is_unique = False
+        while not uid_is_unique:
+            uid = ''.join(random.choice(string.ascii_letters) for i in range(20))
+            if not models.User.query.filter_by(uid=uid).first():
+                uid_is_unique = True
+        # Add user
+        try:
+            models.db_session.add(models.User(uid=uid, email=email, password=hash.encrypt(password)))
+            models.db_session.commit()
+        except Exception as e:
+            error = 'error adding user email: %s' % (str(e),)
+            print(error)
+            return VerifyCode(exitcode=5, msg=error)
+        # create token
+        token = write_token(uid)
+        # remove code from pending signups
+        models.db_session.delete(pending_user)
+        return VerifyCode(exitcode=0, token=token)
+
+
+class LoginUser(graphene.Mutation):
+    class Arguments:
+        email = graphene.String(required=True)
+        password = graphene.String(required=True)
+
+    exitcode = graphene.Int()
+    token = graphene.String()
+    msg = graphene.String()
+
+    def mutate(self, info, email, password):
         # Get user
         user = models.User.query.filter_by(email=email).first()
         if not user:
-            return LoginUser(exitcode=2, msg="%s is not signed up. Please sign up first." % (email, ))
-        if code and password:
-            return LoginUser(exitcode=3, msg="Please provide either login code OR password")
-        elif code:
-            # If user has set password, disallow login by code
-            if user.password:
-                return LoginUser(exitcode=4, msg="You have already set a password. Please use your password to log in")
-            pending_user = models.PendingSignup.query.filter_by(uid=user.uid).first()
-            # Check time
-            if not is_login_code_valid(pending_user.uid):
-                return LoginUser(exitcode=500, msg="Your code has expired. Please request a new code")
-            # Check code
-            if pending_user.code != code:
-                return LoginUser(exitcode=6, msg="Incorrect code. Please try again")
-            # Else continue to token
-        elif password:
-            # If user has not set password, tell her
-            if not user.password:
-                return LoginUser(
-                    exitcode=7,
-                    msg="You have not yet set a password. Please visit our landing page to log in"
-                )
-            # hash and check password
-            if not hash.check(password, user.password):
-                return LoginUser(exitcode=8, msg='password is incorrect')
-            # Else continue to token
-        else:
-            return LoginUser(exitcode=3, msg="Please provide either login code or password")
-        # Continue with token
+            return LoginUser(exitcode=200, msg="%s is not signed up. Please sign up first." % (email, ))
+        # hash and check password
+        if not hash.check(password, user.password):
+            return LoginUser(exitcode=3, msg='password is incorrect')
+        # Check if user is already logged in
         logged_in_user = models.Session.query.filter_by(uid=user.uid).first()
         if logged_in_user:
             # Logout
             models.db_session.delete(logged_in_user)
         # Now user has no token
-        session_token = SessionToken()
-        try:
-            models.db_session.add(models.Session(
-                uid=user.uid,
-                token=str(session_token),
-                created=datetime.datetime.now(),
-                timeout=datetime.timedelta(days=90)
-            ))
-            models.db_session.commit()
-            return LoginUser(exitcode=0, token=session_token)
-        except Exception as e:
-            error = 'error during login: ' + str(e)
-            print(error)
-            return LoginUser(exitcode=9, msg=error)
+        token = write_token(user.uid)
+        return LoginUser(exitcode=0, token=token)
 
 
 class LogoutUser(graphene.Mutation):

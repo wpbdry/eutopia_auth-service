@@ -37,6 +37,7 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     # register_user = RegisterUser.Field()
     register_email = registration.RegisterEmail.Field()
+    verify_code = session.VerifyCode.Field()
     login_user = session.LoginUser.Field()
     logout_user = session.LogoutUser.Field()
 

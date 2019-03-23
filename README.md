@@ -39,7 +39,7 @@ Code successfully emailed to user
 
 2: Email entered is not a valid email address.
 
-3: Email already belongs to full user.
+3: Email already belongs to full user. 
 
 4: Email has already been sent a code which is still valid.
 User should use that code or request a new one
@@ -55,14 +55,15 @@ See msg for more details
 
 8: Error while sending email
 
-### Login
-Allows user to login, with either
-temporary signup code, or password
+### Verify code
+Accepts email and code, creates password,
+logs user in, and returns token.
 ```gql
 mutation {
-  loginUser(
-    email: "myemail@me.com",
-    code: "938002"
+  verifyCode(
+    email: "you@yourmail.de",
+    code: "972457"
+    password: "my_secret"
   ) {
     exitcode
     token
@@ -70,7 +71,25 @@ mutation {
   }
 }
 ```
-OR
+
+#### Exit codes
+
+0: Code sucessfully verified.
+Password stored.
+Token returned
+
+200: Email not registered
+
+500: Code timed out.
+
+3: Incorrect code.
+
+4: Password too short.
+
+5: Error adding user to database.
+
+### Login
+Allows user to login with password
 ```gql
 mutation {
   loginUser(
@@ -88,28 +107,10 @@ mutation {
 
 0: User successfully logged in. Token returned.
 
-2: Given email address is not associated with
+200: Given email address is not associated with
 any user. Please sign up first.
 
-3: This mutation should be passed temporary login code
-or password, not both.
-
-4: User has already set a password,
-but is trying to log in with temporary code.
-Please login with password
-
-500: Code provided has expired.
-User should request a new code.
-
-6: Incorrect code.
-
-7: User is trying to log in with password
-but has never set one.
-
-8: Incorrect password
-
-9: Error adding token to sessions database.
-See msg for more information.
+3: Incorrect password.
 
 ### Logout
 Receives a token, and logs out user

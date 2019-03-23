@@ -28,7 +28,7 @@ class PendingSignup(Base):
     __table_args__ = {'schema': 'auth'}
     __tablename__ = 'pending_signup'
 
-    uid = Column(String, primary_key=True)
+    email = Column(String, primary_key=True)
     code = Column(String)
     created = Column(TIMESTAMP)
 
