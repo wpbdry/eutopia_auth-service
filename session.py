@@ -54,6 +54,10 @@ class VerifyCode(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info, email, code, password):
+        # Check if user is already signed up
+        permanent_user = models.PendingSignup.query.filter_by(email=email).first()
+        if permanent_user:
+            return VerifyCode(exitcode=6, msg="user has already verified code")
         # Check code
         pending_user = models.PendingSignup.query.filter_by(email=email).first()
         if not pending_user:
@@ -124,7 +128,7 @@ class LogoutUser(graphene.Mutation):
     def mutate(self, info, token):
         logged_in_user = models.Session.query.filter_by(token=token).first()
         if not logged_in_user:
-            return LoginUser(exitcode=2, msg="user was not logged in")
+            return LoginUser(exitcode=200, msg="user was not logged in")
         try:
             models.db_session.delete(logged_in_user)
             models.db_session.commit()
