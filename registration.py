@@ -131,7 +131,7 @@ class IsCodeValid(graphene.Mutation):
     msg = graphene.String()
 
     def mutate(self, info, code, email):
-        pending_user = models.PendingSignup.query.filter_by(email=email)
+        pending_user = models.PendingSignup.query.filter_by(email=email).first()
         if not pending_user:
             return IsCodeValid(exitcode=2, msg="user never requested a code")
         is_valid = is_login_code_valid(pending_user.email)

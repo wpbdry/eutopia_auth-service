@@ -23,6 +23,7 @@ class Mutation(graphene.ObjectType):
     # register_user = RegisterUser.Field()
     register_email = registration.RegisterEmail.Field()
     request_new_code = registration.RequestNewCode.Field()
+    is_code_valid = registration.IsCodeValid.Field()
     verify_code = session.VerifyCode.Field()
     login_user = session.LoginUser.Field()
     logout_user = session.LogoutUser.Field()

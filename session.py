@@ -16,31 +16,23 @@ def is_login_code_valid(email):
 
 
 def write_token(uid):
-    session_token = SessionToken()
+    session_token_is_unique = False
+    while not session_token_is_unique:
+        token = ''.join(random.choice(string.ascii_letters) for i in range(20))
+        token_exists = models.Session.query.filter_by(token=token).first()
+        if not token_exists:
+            session_token_is_unique = True
     try:
         models.db_session.add(models.Session(
             uid=uid,
-            token=str(session_token),
+            token=token,
             created=datetime.datetime.now(),
             timeout=datetime.timedelta(days=90)
         ))
         models.db_session.commit()
-        return str(session_token)
+        return token
     except Exception as e:
         raise Exception(str(e))
-
-
-class SessionToken:
-    def __init__(self):
-        self.token = ''.join(random.choice(string.ascii_letters) for i in range(20))
-        self.timeout = datetime.timedelta(days=90)
-        self.created = datetime.datetime.now()
-
-    def __str__(self):
-        return self.token
-
-    def is_valid(self):
-        pass
 
 
 class VerifyCode(graphene.Mutation):
@@ -55,7 +47,7 @@ class VerifyCode(graphene.Mutation):
 
     def mutate(self, info, email, code, password):
         # Check if user is already signed up
-        permanent_user = models.PendingSignup.query.filter_by(email=email).first()
+        permanent_user = models.User.query.filter_by(email=email).first()
         if permanent_user:
             return VerifyCode(exitcode=6, msg="user has already verified code")
         # Check code
@@ -108,14 +100,17 @@ class LoginUser(graphene.Mutation):
         # hash and check password
         if not hash.check(password, user.password):
             return LoginUser(exitcode=3, msg='password is incorrect')
-        # Check if user is already logged in
-        logged_in_user = models.Session.query.filter_by(uid=user.uid).first()
-        if logged_in_user:
-            # Logout
-            models.db_session.delete(logged_in_user)
-        # Now user has no token
-        token = write_token(user.uid)
-        return LoginUser(exitcode=0, token=token)
+        #TODO: Check if user is already logged in on this device
+        # Write token
+        try:
+            token = write_token(user.uid)
+            return LoginUser(exitcode=0, token=token)
+        except Exception as e:
+            error = "error adding token to database: %s" % (str(e), )
+            return LoginUser(
+                exitcode=4,
+                msg=error
+            )
 
 
 class LogoutUser(graphene.Mutation):
@@ -138,20 +133,20 @@ class LogoutUser(graphene.Mutation):
             return LogoutUser(exitcode=3, msg='error during logout')
 
 
-#TODO: Change this to a query
+#TODO: Change this mutation to a query
 class IsUserLoggedIn(graphene.Mutation):
     class Arguments:
         token = graphene.String()
-        password = graphene.String()
+        authpassword = graphene.String()
 
     isloggedin = graphene.Boolean()
     uid = graphene.String()
     exitcode = graphene.Int()
     msg = graphene.String()
 
-    def mutate(self, info, token, password):
+    def mutate(self, info, token, authpassword):
         # If password is wrong, throw error
-        if password != config.my_password:
+        if authpassword != config.my_password:
             return IsUserLoggedIn(exitcode=2, msg="authentication error")
         # Check if token is in database
         try:

@@ -12,8 +12,8 @@ INSERT INTO auth.user (email, password, uid)
 
 DROP TABLE IF EXISTS auth.session CASCADE;
 CREATE TABLE auth.session (
-  uid       char(20)        UNIQUE NOT NULL REFERENCES auth.user(uid),
   token     char(20)        UNIQUE NOT NULL,
+  uid       char(20)        NOT NULL REFERENCES auth.user(uid),
   created   timestamp       NOT NULL,
   timeout   interval        NOT NULL
 );

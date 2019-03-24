@@ -111,7 +111,7 @@ Code is either valid or invalid. See `isvalid`
 2: User never requested a code
 
 ### Verify code
-Accepts email and code, creates password,
+Accepts email and code, creates password, creates user,
 logs user in, and returns token.
 ```gql
 mutation {
@@ -169,6 +169,9 @@ any user. Please sign up first.
 
 3: Incorrect password.
 
+4: Error adding token to database.
+See msg for more details.
+
 ### Logout
 Receives a token, and logs out user
 ```gql
@@ -195,7 +198,7 @@ Receives a token, if valid, returns uid
 mutation {
   isUserLoggedIn(
     token: "token",
-    password: "secret stuff"
+    authpassword: "secret stuff"
   ) {
     isloggedin,
     uid,

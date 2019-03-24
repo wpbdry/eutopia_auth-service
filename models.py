@@ -37,7 +37,7 @@ class Session(Base):
     __table_args__ = {'schema' : 'auth'}
     __tablename__ = 'session'
 
-    uid = Column(String, primary_key=True)
-    token = Column(String)
+    token = Column(String, primary_key=True)
+    uid = Column(String)
     created = Column(TIMESTAMP)
     timeout = Column(Interval)
