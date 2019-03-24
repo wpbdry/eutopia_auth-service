@@ -98,7 +98,7 @@ class RegisterEmail(graphene.Mutation):
         return RegisterEmail(exitcode=8, msg=result["msg"])
 
 
-class RequestNewCode:
+class RequestNewCode(graphene.Mutation):
     class Arguments:
         email = graphene.String()
 
