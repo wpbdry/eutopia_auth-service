@@ -1,37 +1,30 @@
 import graphene
 from graphene import relay
 from graphene_sqlalchemy import SQLAlchemyObjectType, SQLAlchemyConnectionField
-from models import User as UserModel
+import models
 
-import registration, session
+import registration, session, config
 
 
-class User(SQLAlchemyObjectType):
+class Session(SQLAlchemyObjectType):
     class Meta:
-        model = UserModel
+        model = models.Session
         interfaces = (relay.Node, )
 
 
-class UserConnection(relay.Connection):
-    class Meta:
-        node = User
-
-
 class Query(graphene.ObjectType):
-    node = graphene.relay.Node.Field()
     query_test = graphene.String(argument=graphene.String(default_value="it's working"))
 
     def resolve_query_test(self, info, argument):
         return argument
 
-    # list of all users (TODO: remove)
-    all_users = SQLAlchemyConnectionField(UserConnection)
+    # check if someone is logged in with token
+    session = graphene.List(Session, token=graphene.String())
 
-    # query user by name (TODO: remove when other queries are implemented)
-    user = graphene.List(User, name=graphene.String())
+    def resolve_session(self, info, token):
+        return Session.get_query(info).filter_by(token=token).all()
 
-    def resolve_user(self, info, **args):
-        return User.get_query(info).filter(UserModel.name.contains(args.get('name'))).all()
+    # DOESN'T CHECK IF TOKEN IS VALID
 
 
 class Mutation(graphene.ObjectType):

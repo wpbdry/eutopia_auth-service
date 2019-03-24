@@ -24,6 +24,13 @@ $: pip install -r requirements.txt
 $: python3 app.py
 ```
 
+### Test connection
+```gql
+query {
+  queryTest
+}
+```
+
 ## Mutations
 
 ### Register Email
@@ -181,3 +188,38 @@ mutation {
 
 3: Error deleting token from database.
 See msg for more details
+
+## Queries
+
+### Check if token is valid
+
+```gql
+query {
+  session(token: "TxamJScoJjTsVUgsesnL") {
+    uid
+  }
+}
+```
+Returns a list of users logged in
+with that user id.
+
+Return value if token is valid:
+```gql
+{
+  "data": {
+    "session": [
+      {
+        "uid": "synGXuuxZsaWABVmLRDm"
+      }
+    ]
+  }
+}
+```
+Return value if token is not valid:
+```gql
+{
+  "data": {
+    "session": []
+  }
+}
+```

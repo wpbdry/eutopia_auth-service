@@ -24,5 +24,10 @@ flask_port = 5000
 send_mail = "http://localhost:5001/send-mail"
 send_mail_password = secret.send_mail_password
 
+
 # Other
 minimum_password_length = 8
+
+
+# Auth service passwords
+my_password = secret.auth_service_password
