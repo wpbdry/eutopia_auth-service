@@ -121,6 +121,7 @@ class RequestNewCode(graphene.Mutation):
             return RequestNewCode(exitcode=700, msg=error)
 
 
+#TODO: Change this mutation to a query
 class IsCodeValid(graphene.Mutation):
     class Arguments:
         email = graphene.String(required=True)
