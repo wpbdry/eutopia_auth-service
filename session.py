@@ -136,3 +136,46 @@ class LogoutUser(graphene.Mutation):
         except Exception as e:
             print('error during logout: ' + str(e))
             return LogoutUser(exitcode=3, msg='error during logout')
+
+
+#TODO: Change this to a query
+class IsUserLoggedIn(graphene.Mutation):
+    class Arguments:
+        token = graphene.String()
+        password = graphene.String()
+
+    isloggedin = graphene.Boolean()
+    uid = graphene.String()
+    exitcode = graphene.Int()
+    msg = graphene.String()
+
+    def mutate(self, info, token, password):
+        # If password is wrong, throw error
+        if password != config.my_password:
+            return IsUserLoggedIn(exitcode=2, msg="authentication error")
+        # Check if token is in database
+        try:
+            logged_in_user = models.Session.query.filter_by(token=token).first()
+            if not logged_in_user:
+                return IsUserLoggedIn(
+                    isloggedin=False,
+                    exitcode=0
+                )
+            # Check if token is still valid
+            time_passed = datetime.datetime.now() - logged_in_user.created
+            if time_passed > logged_in_user.timeout:
+                return IsUserLoggedIn(
+                    isloggedin=False,
+                    exitcode=0
+                )
+            return IsUserLoggedIn(
+                isloggedin=True,
+                uid=logged_in_user.uid,
+                exitcode=0
+            )
+        except Exception as e:
+            error = "Error checking sessions database: %s" % (str(e), )
+            return IsUserLoggedIn(
+                exitcode=3,
+                msg=error
+            )

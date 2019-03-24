@@ -189,37 +189,27 @@ mutation {
 3: Error deleting token from database.
 See msg for more details
 
-## Queries
-
 ### Check if token is valid
+Receives a token, if valid, returns uid
+```gql
+mutation {
+  isUserLoggedIn(
+    token: "token",
+    password: "secret stuff"
+  ) {
+    isloggedin,
+    uid,
+    exitcode,
+    msg
+  }
+}
+```
 
-```gql
-query {
-  session(token: "TxamJScoJjTsVUgsesnL") {
-    uid
-  }
-}
-```
-Returns a list of users logged in
-with that user id.
+#### Exit codes
 
-Return value if token is valid:
-```gql
-{
-  "data": {
-    "session": [
-      {
-        "uid": "synGXuuxZsaWABVmLRDm"
-      }
-    ]
-  }
-}
-```
-Return value if token is not valid:
-```gql
-{
-  "data": {
-    "session": []
-  }
-}
-```
+0: Success. `isloggedin` is either true or false.
+
+2: Incorrect password.
+
+3: Error checking database.
+Check msg for more details.
