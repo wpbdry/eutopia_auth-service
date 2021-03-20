@@ -13,7 +13,7 @@ graphql-relay==0.4.5
 graphql-server-core==1.1.1
 idna==2.8
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2==2.11.3
 MarkupSafe==1.1.1
 passlib==1.7.1
 promise==2.2.1
